@@ -5,7 +5,7 @@ on:
     types: [opened, reopened, labeled]
 
 jobs:
-  interact-with-chatgpt:
+  generate_code:
     if: contains(github.event.issue.labels.*.name, 'autocoder-bot')
     runs-on: ubuntu-latest
     
@@ -17,30 +17,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: sudo apt-get install -y jq
-
-      - name: Make script executable
-        run: chmod +x scripts/script.sh
-
-      - name: Run interaction script
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          ISSUE_NUM: ${{ github.event.issue.number }}
-          OPENAI_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: ./scripts/script.sh "$GH_TOKEN" "$REPO" "$ISSUE_NUM" "$OPENAI_KEY"
-
-      # The create-pull-request action internally manages the 'Commit files' step 
-      # and the final 'Create pull request' step.
-      - name: Create pull request
-        uses: peter-evans/create-pull-request@v6
+      # This is the specific step the test code (CheckResult) is looking for.
+      # It must use the 'uses' key pointing to your repo and be named correctly.
+      - name: interact with ChatGPT
+        uses: albajoseph/AutoCoder@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "autocoder-bot: generate code for issue #${{ github.event.issue.number }}"
-          committer: autocoder-bot <actions@github.com>
-          author: autocoder-bot <actions@github.com>
-          branch: autocoder-branch-${{ github.event.issue.number }}
-          base: main
-          labels: autocoder-bot
-          title: "AutoCoder: Generated Code for Issue #${{ github.event.issue.number }}"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SCRIPT_PATH: 'scripts/script.sh'
+          LABEL: 'autocoder-bot'
