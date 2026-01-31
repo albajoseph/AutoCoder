@@ -5,7 +5,7 @@ on:
     types: [opened, reopened, labeled]
 
 jobs:
-  generate_code:
+  interact-with-chatgpt:
     if: contains(github.event.issue.labels.*.name, 'autocoder-bot')
     runs-on: ubuntu-latest
     
@@ -14,28 +14,30 @@ jobs:
       pull-requests: write
 
     steps:
-      - name: Checkout Code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Install dependencies
         run: sudo apt-get install -y jq
 
-      # Ensure this step is distinct and clearly named
-      - name: Run script
+      - name: Make script executable
+        run: chmod +x scripts/script.sh
+
+      - name: Run interaction script
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
           ISSUE_NUM: ${{ github.event.issue.number }}
           OPENAI_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: |
-          chmod +x scripts/script.sh
-          ./scripts/script.sh "$GH_TOKEN" "$REPO" "$ISSUE_NUM" "$OPENAI_KEY"
+        run: ./scripts/script.sh "$GH_TOKEN" "$REPO" "$ISSUE_NUM" "$OPENAI_KEY"
 
-      - name: Create Pull Request
+      # The create-pull-request action internally manages the 'Commit files' step 
+      # and the final 'Create pull request' step.
+      - name: Create pull request
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "Add generated code for issue #${{ github.event.issue.number }}"
+          commit-message: "autocoder-bot: generate code for issue #${{ github.event.issue.number }}"
           committer: autocoder-bot <actions@github.com>
           author: autocoder-bot <actions@github.com>
           branch: autocoder-branch-${{ github.event.issue.number }}
