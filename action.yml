@@ -1,0 +1,56 @@
+name: 'AutoCoder'
+description: 'Automates code generation from GitHub issues using ChatGPT and creates a pull request.'
+author: 'albajoseph'
+
+inputs:
+  GITHUB_TOKEN:
+    description: 'Token for GitHub API authentication.'
+    required: true
+  REPOSITORY:
+    description: 'The repository where the action is executed.'
+    required: true
+  ISSUE_NUMBER:
+    description: 'The number of the issue that triggered the action.'
+    required: true
+  OPENAI_API_KEY:
+    description: 'API key for OpenAI.'
+    required: true
+  SCRIPT_PATH:
+    description: 'The path to the interaction script.'
+    required: true
+    default: 'scripts/script.sh'
+  LABEL:
+    description: 'The label that triggers the action.'
+    required: true
+    default: 'autocoder-bot'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: sudo apt-get install -y jq
+      shell: bash
+
+    - name: Make script executable
+      run: chmod +x ${{ inputs.SCRIPT_PATH }}
+      shell: bash
+
+    - name: Run interaction script
+      run: |
+        ${{ inputs.SCRIPT_PATH }} "${{ inputs.GITHUB_TOKEN }}" "${{ inputs.REPOSITORY }}" "${{ inputs.ISSUE_NUMBER }}" "${{ inputs.OPENAI_API_KEY }}"
+      shell: bash
+
+    - name: Create pull request
+      uses: peter-evans/create-pull-request@v6
+      with:
+        token: ${{ inputs.GITHUB_TOKEN }}
+        commit-message: "autocoder-bot: generate code for issue #${{ inputs.ISSUE_NUMBER }}"
+        committer: autocoder-bot <actions@github.com>
+        author: autocoder-bot <actions@github.com>
+        branch: autocoder-branch-${{ inputs.ISSUE_NUMBER }}
+        base: main
+        labels: ${{ inputs.LABEL }}
+        title: "AutoCoder: Generated Code for Issue #${{ inputs.ISSUE_NUMBER }}"
