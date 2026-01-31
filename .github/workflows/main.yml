@@ -1,4 +1,4 @@
-name: Access Issue Information
+name: AutoCoder Workflow
 
 on:
   issues:
@@ -14,19 +14,6 @@ jobs:
 
       - name: Install dependencies
         run: sudo apt-get install -y jq
-
-      - name: Debug Environment Variables
-        env:
-          REPO: ${{ github.repository }}
-          ISSUE_NUM: ${{ github.event.issue.number }}
-          # Do not echo the actual OPENAI_API_KEY for security; check if it's set
-          HAS_OPENAI_KEY: ${{ secrets.OPENAI_API_KEY != '' }}
-          HAS_GH_TOKEN: ${{ secrets.GITHUB_TOKEN != '' }}
-        run: |
-          echo "Repository: ${REPO}"
-          echo "Issue Number: ${ISSUE_NUM}"
-          echo "OpenAI Key present: ${HAS_OPENAI_KEY}"
-          echo "GitHub Token present: ${HAS_GH_TOKEN}"
 
       - name: Generate Code with ChatGPT
         env:
