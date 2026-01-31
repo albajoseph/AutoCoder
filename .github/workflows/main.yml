@@ -6,7 +6,6 @@ on:
 
 jobs:
   generate_code:
-    # Objective: Only run if the issue has the 'autocoder-bot' label
     if: contains(github.event.issue.labels.*.name, 'autocoder-bot')
     runs-on: ubuntu-latest
 
@@ -14,14 +13,18 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Install dependencies
+        run: sudo apt-get install -y jq
+
       - name: Generate Code with ChatGPT
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-          REPO_NAME: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          ISSUE_NUM: ${{ github.event.issue.number }}
+          OPENAI_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           chmod +x scripts/script.sh
-          ./scripts/script.sh "$ISSUE_NUMBER" "$REPO_NAME" "$OPENAI_API_KEY"
+          ./scripts/script.sh "$GH_TOKEN" "$REPO" "$ISSUE_NUM" "$OPENAI_KEY"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
